@@ -51,6 +51,9 @@ coverage.xml
 .pytest_cache/
 cover/
 
+# Pycharm
+.idea
+
 # Translations
 *.mo
 *.pot
