@@ -1,5 +1,6 @@
 # XINELA TRON
 
-## Install
-- Install packages using `pip install -r requirements.txt`
-- Start the bot using `python main.py`
+## O bot eh reiniciado sempre que tiver um commit novo.
+
+
+
