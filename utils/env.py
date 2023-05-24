@@ -1,5 +1,7 @@
 import discord
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GUILD_ID_INT = int(os.getenv("GUILD_ID"))

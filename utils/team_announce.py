@@ -90,6 +90,6 @@ async def process_photo(ctx, photo_setup, member_ids):
         frames.append(composite_frame)
 
     frames[0].save("group_photo.gif", save_all=True, append_images=frames[1:], loop=0)
-    await ctx.send(f"<t:1684530000:R>! Eis os escolhidos de hoje!\n<@{member_ids[0]}> <@{member_ids[1]}> <@{member_ids[2]}> <@{member_ids[3]}> <@{member_ids[4]}> <@{member_ids[5]}> <@{member_ids[6]}>")
+    await ctx.send(f"<t:1684875600:R>! Eis os escolhidos de hoje!\n<@{member_ids[0]}> <@{member_ids[1]}> <@{member_ids[2]}> <@{member_ids[3]}> <@{member_ids[4]}>")
     await ctx.send(file=discord.File("group_photo.gif"))
 
