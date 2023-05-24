@@ -5,7 +5,6 @@ import discord
 from discord.ext import commands
 from utils.content import Content
 
-
 class XinelaTron(commands.Bot):
     def __init__(self, debug=False, **options: Any):
         super().__init__(command_prefix='!', intents=discord.Intents.all(), **options)
@@ -20,7 +19,9 @@ class XinelaTron(commands.Bot):
     def register_commands(self, debug):
         @self.event
         async def on_ready():
+            print(f'{self.user} has connected to Discord!')
             await self.load_extension("cogs.poll")
+
             self.tree.copy_global_to(guild=env.GUILDS_ID_OBJ if not debug else env.GUILDS_ID_DEBUG_OBJ)
             await self.tree.sync(guild=env.GUILDS_ID_OBJ if not debug else env.GUILDS_ID_DEBUG_OBJ)
 

@@ -63,6 +63,12 @@ class DataHandler:
         else:
             return "No users at this time."
 
+    def get_users_list_at_time(self, time):
+        if time in self.dict['times']:
+            return list((user for user in self.dict['times'][time]))
+        else:
+            return None
+
     def add_job(self, run_date, channel_id, user_id, job_id):
         self.dict['jobs'].append({
             'job_id': job_id,
@@ -87,9 +93,10 @@ def async_to_sync(async_func):
 class TimeslotModal(discord.ui.Modal, title="Novo horario"):
     hour = discord.ui.TextInput(style=discord.TextStyle.short, label="Hora (15h30)", required=True,
                                 placeholder="19h30")
+
     async def on_submit(self, interaction: discord.Interaction):
         timeslot = f"{self.hour.value}"
-        # Check if input is valid
+
         if len(timeslot.split("h")) == 2:
             try:
                 hour, minute = map(int, timeslot.split("h"))
@@ -113,7 +120,7 @@ class TimeSlotButton(discord.ui.Button):
         super().__init__(label=label, **kwargs)
 
     async def callback(self, interaction: discord.Interaction):
-        await self.view.on_button(interaction, self.label.replace("h", ""))
+        await self.view.on_button(interaction, self.label)
 
 
 # class TimeSlotRemoveButton(discord.ui.Button):
@@ -174,9 +181,14 @@ class Dota2View(discord.ui.View):
             self.buttons = {}
 
         for timeslot in self.data.get_timeslots():
+            print(timeslot)
             if timeslot in self.buttons:
                 self.remove_item(self.buttons[timeslot])
-            button = TimeSlotButton(label=timeslot)
+            split_time = timeslot.split("h")
+            timeslot_str = f"{split_time[0]}h"
+            if split_time[1] != "00":
+                timeslot_str += f"{split_time[1]}"
+            button = TimeSlotButton(label=timeslot_str)
             self.add_item(button)
             self.buttons[timeslot] = button
 
@@ -218,7 +230,13 @@ class Dota2View(discord.ui.View):
 
         for timeslot in self.data.get_timeslots():
             if self.data.dict['times'].get(timeslot):
-                embed.add_field(inline=False, name=timeslot, value=self.data.get_users_at_time(timeslot))
+
+                split_time = timeslot.split("h")
+                timeslot_str = f"{split_time[0]}h"
+                if split_time[1] != "00":
+                    timeslot_str += f"{split_time[1]}"
+
+                embed.add_field(inline=False, name=timeslot_str, value=self.data.get_users_at_time(timeslot))
 
             button = self.buttons.get(timeslot)
             if button is not None:
@@ -239,38 +257,41 @@ class Dota2View(discord.ui.View):
         await self.disable_all_items()
 
     async def add_timeslot(self, timeslot):
-        hour, minute = map(int, timeslot.split('h'))
-        timeslot_formatted = f"{hour:02d}h{minute:02d}"
+        timeslot_formatted = self.format_time(timeslot)
         self.data.dict['times'][timeslot_formatted] = []
         self.data.save_to_json()
         self.create_buttons()
         await self.update_message()
 
-    # @discord.ui.button(label="+", style=discord.ButtonStyle.primary)
-    # async def on_button_add_timeslot(self, interaction: discord.Interaction, button: discord.ui.Button):
-    #     timeslot_modal = TimeslotModal()
-    #     timeslot_modal.user = interaction.user
-    #     timeslot_modal.view = self
-    #     await interaction.response.send_modal(timeslot_modal)
+    def format_time(self, time_str):
+        split_time = time_str.split("h")
+        hour = int(split_time[0]) if split_time[0] else 0
+        minute = int(split_time[1]) if len(split_time) > 1 and split_time[1] else 0
+        time_formatted = f"{hour:02d}h{minute:02d}"
+        return time_formatted
 
-    async def on_button(self, interaction, time):
+    async def on_button(self, interaction, time_str):
+        time_formatted = self.format_time(time_str)
         self.message = interaction.message
         await interaction.response.defer()
-        count = self.data.add(f"{time}h", interaction.user.id)
-        job_id = f'reminder_{time}h'
+        count = self.data.add(time_formatted, interaction.user.id)
+        job_id = f'reminder_{time_formatted}'
         existing_jobs = [job for job in self.data.dict['jobs'] if job['job_id'] == job_id]
         for job in existing_jobs:
             if self.scheduler.get_job(job['job_id']):
                 self.scheduler.remove_job(job['job_id'])
                 self.data.remove_job(job['job_id'])
 
-        if count >= 5:
+        if count >= 1:
+            split_time = time_str.split("h")
+            hour = int(split_time[0])
+            minute = int(split_time[1]) if len(split_time) > 1 and split_time[1] else 0
             run_date = datetime.now(pytz.timezone('America/Sao_Paulo'))
-            run_date += timedelta(seconds=5)
+            run_date = run_date.replace(hour=hour - 1, minute=minute, second=0, microsecond=0)
 
             if run_date < datetime.now(pytz.timezone('America/Sao_Paulo')):
                 run_date += timedelta(days=1)
-            self.scheduler.add_job(self.sync_send_reminder, 'date', run_date=run_date, args=["18h"], id=job_id)
+            self.scheduler.add_job(self.sync_send_reminder, 'date', run_date=run_date, args=[time_formatted], id=job_id)
             self.data.add_job(run_date, interaction.channel.id, interaction.user.id, job_id)
         await self.update_message()
 
@@ -278,9 +299,9 @@ class Dota2View(discord.ui.View):
         self.loop.create_task(self.send_reminder(selected_time))
 
     async def send_reminder(self, selected_time):
-        # ids = self.data.get_users_at_time(selected_time)
-        ids = [89437921286819840, 89437921286819840, 89437921286819840, 89437921286819840, 89437921286819840,
-               89437921286819840, 89437921286819840]
+        ids = self.data.get_users_list_at_time(selected_time)
+        #ids.extend([1103071608005984360, 1103071608005984360, 1103071608005984360, 1103071608005984360])
+
         from utils import team_announce
         await team_announce.announce(self.ctx, self.bot.content.get("anuncio"), ids)
         frase = self.bot.content.get_random("abertura_frases")

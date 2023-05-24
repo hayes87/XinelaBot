@@ -80,7 +80,6 @@ async def process_photo(ctx, photo_setup, member_ids):
         frames = add_frames(avatar_frames, pos, group_photo, overlay_image, max_frames)
         all_frames.append(frames)
 
-    print(len(all_frames))
     frames = []
     for frame_set in zip(*all_frames):
         composite_frame = frame_set[0]
@@ -90,6 +89,6 @@ async def process_photo(ctx, photo_setup, member_ids):
         frames.append(composite_frame)
 
     frames[0].save("group_photo.gif", save_all=True, append_images=frames[1:], loop=0)
-    await ctx.send(f"<t:1684875600:R>! Eis os escolhidos de hoje!\n<@{member_ids[0]}> <@{member_ids[1]}> <@{member_ids[2]}> <@{member_ids[3]}> <@{member_ids[4]}>")
+    ids_str = ' '.join([f'<@{mid}>' for mid in member_ids])
+    await ctx.send(f"<t:1684965600:R>! Eis os escolhidos de hoje!\n {ids_str}")
     await ctx.send(file=discord.File("group_photo.gif"))
-
