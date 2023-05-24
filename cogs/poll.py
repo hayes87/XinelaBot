@@ -224,7 +224,7 @@ class Dota2View(discord.ui.View):
 
         embed = discord.Embed(title="Xinela Ready Checker", description="Escolha a hora do show!")
 
-        # embed.set_image(url="https://cdn.discordapp.com/attachments/1103077518375915571/1103541153724366868/image.png")
+        embed.set_image(url="https://cdn.discordapp.com/attachments/1103077518375915571/1103541153724366868/image.png")
         embed.set_thumbnail(
             url="https://cdn.discordapp.com/app-icons/1103071608005984360/a5ee3bf0eb26fd1629a99771d37c2780.png?size=256")
 
