@@ -282,7 +282,7 @@ class Dota2View(discord.ui.View):
                 self.scheduler.remove_job(job['job_id'])
                 self.data.remove_job(job['job_id'])
 
-        if count >= 1:
+        if count >= 5:
             split_time = time_str.split("h")
             hour = int(split_time[0])
             minute = int(split_time[1]) if len(split_time) > 1 and split_time[1] else 0
@@ -361,27 +361,27 @@ class Poll(commands.Cog):
         self._bot = xinelabot
 
     @commands.command()
-    async def play(self, ctx: commands.Context):
+    async def readycheck(self, ctx: commands.Context):
         view = Dota2View(user_id=ctx.author.id, loop=self._bot.loop, ctx=ctx, bot=self._bot)
         await view.new()
 
-    @commands.command()
-    async def anunciar_time(self, ctx):
-        member_ids = [176479166856691714, 429398979717890080, 119832904388968451, 123603156574666752,
-                      103533905486811136]
-
-        from utils import team_announce
-        await team_announce.announce(ctx, self._bot.content.get("anuncio"), member_ids)
-        frase = self._bot.content.get_random("abertura_frases")
-        audio = generate(
-            text=frase.replace("*", ""),
-            voice=random.choice(["RpvoK8WoHsA3IVJ5sZRq"]),
-            model="eleven_multilingual_v1"
-        )
-
-        save(audio, "frase_do_dia.wav")
-        with open("frase_do_dia.wav", "rb") as f:
-            await ctx.send(file=discord.File(f, "frase_do_dia.wav"))
+    # @commands.command()
+    # async def anunciar_time(self, ctx):
+    #     member_ids = [176479166856691714, 429398979717890080, 119832904388968451, 123603156574666752,
+    #                   103533905486811136]
+    #
+    #     from utils import team_announce
+    #     await team_announce.announce(ctx, self._bot.content.get("anuncio"), member_ids)
+    #     frase = self._bot.content.get_random("abertura_frases")
+    #     audio = generate(
+    #         text=frase.replace("*", ""),
+    #         voice=random.choice(["RpvoK8WoHsA3IVJ5sZRq"]),
+    #         model="eleven_multilingual_v1"
+    #     )
+    #
+    #     save(audio, "frase_do_dia.wav")
+    #     with open("frase_do_dia.wav", "rb") as f:
+    #         await ctx.send(file=discord.File(f, "frase_do_dia.wav"))
 
 
 async def setup(bot):
