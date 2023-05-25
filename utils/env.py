@@ -1,6 +1,7 @@
 import discord
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -12,3 +13,5 @@ CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
 CHANNEL_ID_DEBUG = int(os.getenv("CHANNEL_ID_DEBUG"))
 ROLE_ID = int(os.getenv("ROLE_ID"))
 ROLE_ID_DEBUG = int(os.getenv("ROLE_ID_DEBUG"))
+ELEVENLABS_API = os.getenv("ELEVENLABS_API")
+CREDENTIAL_JSON = os.getenv("CREDENTIAL_JSON")

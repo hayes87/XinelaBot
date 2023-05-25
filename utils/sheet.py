@@ -5,6 +5,7 @@ import os
 import gspread
 from google.oauth2 import service_account
 import ast
+import utils.env  as env
 
 
 class Sheet:
@@ -24,7 +25,7 @@ class Sheet:
 
     @staticmethod
     def _get_credentials_from_env():
-        json_from_env = os.getenv("CREDENTIAL_JSON")
+        json_from_env = env.CREDENTIAL_JSON
         if json_from_env is None:
             print("Json is invalid")
             return None

@@ -15,8 +15,8 @@ import os
 
 from elevenlabs import generate, save
 from elevenlabs import set_api_key
-
-set_api_key("335dab30fb1997ab03bc18c970d146fd")
+import utils.env as env
+set_api_key(env.ELEVENLABS_API)
 
 
 class DataHandler:
@@ -30,7 +30,7 @@ class DataHandler:
                 return json.load(file)
         else:
             return {
-                "times": {"18h00": [], "19h00": [], "20h00": [], "21h00": []},
+                "times": { "17h00": [], "18h00": [], "19h00": [], "20h00": [], "21h00": []},
                 "jobs": []
             }
 
