@@ -208,6 +208,18 @@ class Dota2View(discord.ui.View):
 
         self.create_buttons()
         embed = self.create_embed()
+
+        try:
+            role_id = int(os.getenv("ROLE_ID"))
+        except:
+            role_id = 0
+
+        role = self.ctx.guild.get_role(role_id)
+        if role:
+            await self.ctx.send(f'{role.mention}!')
+        else:
+            print("role not found")
+
         self.message = await self.ctx.send(view=self, embed=embed)
 
         await self.wait()
@@ -300,7 +312,7 @@ class Dota2View(discord.ui.View):
 
     async def send_reminder(self, selected_time):
         ids = self.data.get_users_list_at_time(selected_time)
-        #ids.extend([1103071608005984360, 1103071608005984360, 1103071608005984360, 1103071608005984360])
+        # ids.extend([1103071608005984360, 1103071608005984360, 1103071608005984360, 1103071608005984360])
 
         from utils import team_announce
         await team_announce.announce(self.ctx, self.bot.content.get("anuncio"), ids)
