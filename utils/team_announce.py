@@ -1,9 +1,7 @@
 import random
-import discord
 import io
 import aiohttp
 from PIL import Image, ImageSequence
-
 
 async def get_avatar_image(guild, user_id, size):
     member = guild.get_member(user_id)
@@ -17,16 +15,14 @@ async def get_avatar_image(guild, user_id, size):
 
     image = Image.open(io.BytesIO(image_data))
 
-    # Check if the image is a GIF
     if image.format == 'GIF':
         frames = ImageSequence.Iterator(image)
         resized_frames = [frame.resize((size, size)) for frame in frames]
         return resized_frames, 'GIF'
     else:
-        # If the image has an alpha channel, replace it with white
         if image.mode == 'RGBA':
             alpha = image.split()[3]
-            bg = Image.new("RGB", image.size, (255, 255, 255))  # change to whatever background color you want
+            bg = Image.new("RGB", image.size, (255, 255, 255))
             bg.paste(image, mask=alpha)
             image = bg
         return [image.resize((size, size))], 'PNG'
@@ -44,7 +40,7 @@ def add_frames(avatar_frames, pos, group_photo, overlay_image, max_frames):
     return frames
 
 
-async def announce(ctx, photo_setups, member_ids):
+async def create_team_photo(ctx, photo_setups, member_ids):
     matching_elements = [item for item in photo_setups if len(item[1]) == len(member_ids)]
     if matching_elements:
         photo_setup = random.choice(matching_elements)
@@ -89,6 +85,4 @@ async def process_photo(ctx, photo_setup, member_ids):
         frames.append(composite_frame)
 
     frames[0].save("group_photo.gif", save_all=True, append_images=frames[1:], loop=0)
-    ids_str = ' '.join([f'<@{mid}>' for mid in member_ids])
-    await ctx.send(f"<t:1684965600:R>! Eis os escolhidos de hoje!\n {ids_str}")
-    await ctx.send(file=discord.File("group_photo.gif"))
+

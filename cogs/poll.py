@@ -16,6 +16,7 @@ import os
 from elevenlabs import generate, save
 from elevenlabs import set_api_key
 import utils.env as env
+
 set_api_key(env.ELEVENLABS_API)
 
 
@@ -24,13 +25,20 @@ class DataHandler:
         self.json_file = json_file
         self.dict = self.load_from_json()
 
+    def reset(self):
+        self.dict = {
+            "times": {"17h00": [], "18h00": [], "19h00": [], "20h00": [], "21h00": []},
+            "jobs": []
+        }
+        self.save_to_json()
+
     def load_from_json(self):
         if os.path.isfile(self.json_file):
             with open(self.json_file) as file:
                 return json.load(file)
         else:
             return {
-                "times": { "17h00": [], "18h00": [], "19h00": [], "20h00": [], "21h00": []},
+                "times": {"17h00": [], "18h00": [], "19h00": [], "20h00": [], "21h00": []},
                 "jobs": []
             }
 
@@ -82,6 +90,33 @@ class DataHandler:
         self.dict['jobs'] = [job for job in self.dict['jobs'] if job['job_id'] != job_id]
         self.save_to_json()
 
+    def most_votes(self):
+        most_voted_time = None
+        most_votes = 0
+
+        for time, votes in self.dict["times"].items():
+            vote_count = len(votes)
+            if vote_count > most_votes:
+                most_votes = vote_count
+                most_voted_time = time
+
+        unix_timestamp = self.time_to_unix_timestamp(most_voted_time)
+
+        return most_voted_time, unix_timestamp
+
+    @staticmethod
+    def time_to_unix_timestamp(time):
+        if time:
+            hour, minute = map(int, time.split('h'))
+            now = datetime.now(pytz.timezone('America/Sao_Paulo'))
+            selected_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            if selected_time < now:
+                selected_time += timedelta(days=1)
+            unix_timestamp = int(selected_time.timestamp())
+        else:
+            unix_timestamp = None
+        return unix_timestamp
+
 
 def async_to_sync(async_func):
     def wrapper(*args, **kwargs):
@@ -116,11 +151,12 @@ class TimeslotModal(discord.ui.Modal, title="Novo horario"):
 
 
 class TimeSlotButton(discord.ui.Button):
-    def __init__(self, label, **kwargs):
+    def __init__(self, time, label, **kwargs):
         super().__init__(label=label, **kwargs)
+        self.time = time
 
     async def callback(self, interaction: discord.Interaction):
-        await self.view.on_button(interaction, self.label)
+        await self.view.on_button(interaction, self.time)
 
 
 # class TimeSlotRemoveButton(discord.ui.Button):
@@ -181,14 +217,13 @@ class Dota2View(discord.ui.View):
             self.buttons = {}
 
         for timeslot in self.data.get_timeslots():
-            print(timeslot)
             if timeslot in self.buttons:
                 self.remove_item(self.buttons[timeslot])
             split_time = timeslot.split("h")
             timeslot_str = f"{split_time[0]}h"
             if split_time[1] != "00":
                 timeslot_str += f"{split_time[1]}"
-            button = TimeSlotButton(label=timeslot_str)
+            button = TimeSlotButton(label=timeslot_str, time=timeslot_str)
             self.add_item(button)
             self.buttons[timeslot] = button
 
@@ -205,7 +240,7 @@ class Dota2View(discord.ui.View):
         # self.buttons["-"] = button
 
     async def new(self):
-
+        # self.emoji = await self.ctx.guild.fetch_emoji("906257799565152336")
         self.create_buttons()
         embed = self.create_embed()
 
@@ -226,17 +261,16 @@ class Dota2View(discord.ui.View):
         await self.disable_all_items()
 
     def create_embed(self):
-        print("Updating Embed..")
-
         def get_button_style(time):
-            if self.data.dict['times'].get(time) and self.user_id in self.data.dict['times'][time]:
-                return discord.ButtonStyle.gray
-            else:
+
+            if len(self.data.get_users_list_at_time(time)) >= 1:
                 return discord.ButtonStyle.green
+            else:
+                return discord.ButtonStyle.gray
 
         embed = discord.Embed(title="Xinela Ready Checker", description="Escolha a hora do show!")
 
-        embed.set_image(url="https://cdn.discordapp.com/attachments/1103077518375915571/1103541153724366868/image.png")
+        # embed.set_image(url="https://cdn.discordapp.com/attachments/1103077518375915571/1103541153724366868/image.png")
         embed.set_thumbnail(
             url="https://cdn.discordapp.com/app-icons/1103071608005984360/a5ee3bf0eb26fd1629a99771d37c2780.png?size=256")
 
@@ -247,12 +281,18 @@ class Dota2View(discord.ui.View):
                 timeslot_str = f"{split_time[0]}h"
                 if split_time[1] != "00":
                     timeslot_str += f"{split_time[1]}"
-
-                embed.add_field(inline=False, name=timeslot_str, value=self.data.get_users_at_time(timeslot))
+                unix_timestamp =self.data.time_to_unix_timestamp(timeslot)
+                embed.add_field(inline=False, name=f"{timeslot_str} <t:{unix_timestamp}:t>", value=self.data.get_users_at_time(timeslot))
 
             button = self.buttons.get(timeslot)
             if button is not None:
                 button.style = get_button_style(timeslot)
+                if len(self.data.get_users_list_at_time(timeslot)) == 4:
+                    button.emoji = "<:eyes_freaking:906257799711973497>"
+                elif len(self.data.get_users_list_at_time(timeslot)) >= 5:
+                    button.emoji = "<a:pugdance:924016472941023312>"
+                else:
+                    button.emoji = None
 
         return embed
 
@@ -315,7 +355,7 @@ class Dota2View(discord.ui.View):
         # ids.extend([1103071608005984360, 1103071608005984360, 1103071608005984360, 1103071608005984360])
 
         from utils import team_announce
-        await team_announce.announce(self.ctx, self.bot.content.get("anuncio"), ids)
+        await team_announce.create_team_photo(self.ctx, self.bot.content.get("anuncio"), ids)
         frase = self.bot.content.get_random("abertura_frases")
         audio = generate(
             text=frase.replace("*", ""),
@@ -327,73 +367,48 @@ class Dota2View(discord.ui.View):
         with open("frase_do_dia.wav", "rb") as f:
             await self.message.channel.send(file=discord.File(f, "frase_do_dia.wav"))
 
-        # await self.message.channel.send(frase)
-
-    # @discord.ui.button(label="Show Jobs", style=discord.ButtonStyle.primary)
-    # async def on_button_show_jobs(self, interaction: discord.Interaction, button: discord.ui.Button):
-    #     # Get all jobs
-    #     jobs = self.scheduler.get_jobs()
-    #
-    #     # Construct a string that lists all jobs and their run times
-    #     job_list = "\n".join([f"Job ID: {job.id}, Run Time: {job.next_run_time}" for job in jobs])
-    #
-    #     # Create an embed with the job list
-    #     embed = discord.Embed(title="Scheduled Jobs", description=job_list)
-    #
-    #     # Send the embed in the channel
-    #     await interaction.response.send_message(embed=embed, ephemeral=True)
-    #
-    # @discord.ui.button(label="Remove All Jobs", style=discord.ButtonStyle.primary)
-    # async def on_btn_remove_all_jobs(self, interaction: discord.Interaction, button: discord.ui.Button):
-    #     # Get all jobs
-    #     self.scheduler.remove_all_jobs()
-    #
-    #     # Send the embed in the channel
-    #     await interaction.response.send_message("Jobs Removed", ephemeral=True)
-    #
-    # @discord.ui.button(label="Dump DB", style=discord.ButtonStyle.primary)
-    # async def on_button_dump_db(self, interaction: discord.Interaction, button: discord.ui.Button):
-    #     # Load the JSON file
-    #     with open(self.data.json_file, 'r') as file:
-    #         votes = json.load(file)
-    #
-    #     # Construct a string that lists all votes
-    #     vote_list = "\n".join(
-    #         [f"Time: {time}, User ID: {', '.join(map(str, user_ids))}" for time, user_ids in votes.items()])
-    #
-    #     # Create an embed with the vote list
-    #     embed = discord.Embed(title="Votes DB Dump", description=vote_list)
-    #
-    #     # Send the embed in the channel
-    #     await interaction.response.send_message(embed=embed, ephemeral=True)
-
 
 class Poll(commands.Cog):
     def __init__(self, xinelabot):
         self._bot = xinelabot
+        self.view = None
 
     @commands.command()
     async def readycheck(self, ctx: commands.Context):
-        view = Dota2View(user_id=ctx.author.id, loop=self._bot.loop, ctx=ctx, bot=self._bot)
-        await view.new()
+        self.view = Dota2View(user_id=ctx.author.id, loop=self._bot.loop, ctx=ctx, bot=self._bot)
+        await self.view.new()
 
-    # @commands.command()
-    # async def anunciar_time(self, ctx):
-    #     member_ids = [176479166856691714, 429398979717890080, 119832904388968451, 123603156574666752,
-    #                   103533905486811136]
-    #
-    #     from utils import team_announce
-    #     await team_announce.announce(ctx, self._bot.content.get("anuncio"), member_ids)
-    #     frase = self._bot.content.get_random("abertura_frases")
-    #     audio = generate(
-    #         text=frase.replace("*", ""),
-    #         voice=random.choice(["RpvoK8WoHsA3IVJ5sZRq"]),
-    #         model="eleven_multilingual_v1"
-    #     )
-    #
-    #     save(audio, "frase_do_dia.wav")
-    #     with open("frase_do_dia.wav", "rb") as f:
-    #         await ctx.send(file=discord.File(f, "frase_do_dia.wav"))
+    @commands.command()
+    async def anunciartime(self, ctx):
+        if self.view is None:
+            return
+
+        voted_time, unix_timestamp = self.view.data.most_votes()
+        member_ids = self.view.data.get_users_at_time(voted_time)
+
+        from utils import team_announce
+        await team_announce.create_team_photo(ctx, self._bot.content.get("anuncio"), member_ids)
+
+        ids_str = ' '.join([f'<@{mid}>' for mid in member_ids])
+        await ctx.send(f"<t:{unix_timestamp}:R>! Eis os escolhidos de hoje!\n {ids_str}")
+        await ctx.send(file=discord.File("group_photo.gif"))
+
+        frase = self._bot.content.get_random("abertura_frases")
+        audio = generate(
+            text=frase.replace("*", ""),
+            voice=random.choice(["RpvoK8WoHsA3IVJ5sZRq"]),
+            model="eleven_multilingual_v1"
+        )
+
+        save(audio, "frase_do_dia.wav")
+        with open("frase_do_dia.wav", "rb") as f:
+            await ctx.send(file=discord.File(f, "frase_do_dia.wav"))
+
+    @commands.command()
+    async def resetar(self, ctx: commands.Context):
+        view = Dota2View(user_id=ctx.author.id, loop=self._bot.loop, ctx=ctx, bot=self._bot)
+        view.data.reset()
+        view.scheduler.remove_all_jobs()
 
 
 async def setup(bot):
