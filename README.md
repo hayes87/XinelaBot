@@ -42,10 +42,7 @@ Here are the commands you can use with XinelaBot:
 
 - `!readycheck`: Starts a new poll
 - `!anunciartime`: Announces the winning time slot and the users who voted for it.
-
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+- `!resetar`: Resets the poll
 
 ## License
 
