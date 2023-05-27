@@ -1,7 +1,5 @@
 # https://docs.google.com/spreadsheets/d/1NRhDtTA6CVb6JHFUoSUVtEg3H12o-MUE7c4n3dre9xw/edit#gid=0
 import json
-import os
-
 import gspread
 from google.oauth2 import service_account
 import ast
