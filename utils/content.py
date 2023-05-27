@@ -9,6 +9,8 @@ class Content:
             "horarios": self._sheet.get_column_values(1),
             "abertura_frases": self._sheet.get_column_values(2),
             "abertura_imagens": self._sheet.get_column_values(3),
+            "naodeu_frases": self._sheet.get_column_values(6),
+            "naodeu_imagens": self._sheet.get_column_values(7),
             "anuncio": self._sheet.eval_get_column_values(9),
         }
 

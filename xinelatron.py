@@ -5,11 +5,9 @@ import discord
 from discord.ext import commands
 from utils.content import Content
 
-
 class XinelaTron(commands.Bot):
     def __init__(self, **options: Any):
         super().__init__(command_prefix='!', intents=discord.Intents.all(), **options)
-
         self.content = Content()
         self.register_commands()
         self.run(env.BOT_TOKEN)
