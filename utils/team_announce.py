@@ -3,6 +3,7 @@ import io
 import aiohttp
 from PIL import Image, ImageSequence
 
+
 async def get_avatar_image(guild, user_id, size):
     member = guild.get_member(user_id)
     if member is None:
@@ -66,7 +67,7 @@ async def process_photo(ctx, photo_setup, member_ids):
     for index, pos in enumerate(avatarPhotoPositionList):
         avatar_frames, _ = await get_avatar_image(ctx.guild, member_ids[index], pos[2])
         if avatar_frames is None:
-            await ctx.send(f"Member with ID {member_ids[index]} not found.")
+            print(f"Member with ID {member_ids[index]} not found.")
             return
         avatars.append((avatar_frames, pos))
         max_frames = max(max_frames, len(avatar_frames))
@@ -85,4 +86,3 @@ async def process_photo(ctx, photo_setup, member_ids):
         frames.append(composite_frame)
 
     frames[0].save("group_photo.gif", save_all=True, append_images=frames[1:], loop=0)
-

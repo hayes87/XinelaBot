@@ -27,7 +27,7 @@ class DataHandler:
 
     def reset(self):
         self.dict = {
-            "times": {"17h00": [], "18h00": [], "19h00": [], "20h00": [], "21h00": []},
+            "times": {"16h00": [], "17h00": [], "18h00": [], "19h00": [], "20h00": [], "21h00": [] , "22h00": []},
             "jobs": []
         }
         self.save_to_json()
@@ -38,7 +38,7 @@ class DataHandler:
                 return json.load(file)
         else:
             return {
-                "times": {"17h00": [], "18h00": [], "19h00": [], "20h00": [], "21h00": []},
+                "times": {"16h00": [], "17h00": [], "18h00": [], "19h00": [], "20h00": [], "21h00": [] , "22h00": []},
                 "jobs": []
             }
 
@@ -159,44 +159,6 @@ class TimeSlotButton(discord.ui.Button):
         await self.view.on_button(interaction, self.time)
 
 
-# class TimeSlotRemoveButton(discord.ui.Button):
-#     def __init__(self, label, **kwargs):
-#         super().__init__(label=label, **kwargs)
-#
-#     async def callback(self, interaction: discord.Interaction):
-#         time_select = TimeSlotSelect(self.view)
-#         await interaction.message.edit(view=self.view)
-#         await interaction.response.defer()
-#         self.view.remove_item(time_select)
-
-#
-# class TimeSlotAddButton(discord.ui.Button):
-#     def __init__(self, label, **kwargs):
-#         super().__init__(label=label, **kwargs)
-#
-#     async def callback(self, interaction: discord.Interaction):
-#         time_select = TimeSlotSelect(self.view)
-#         await interaction.message.edit(view=self.view)
-#         await interaction.response.defer()
-#         self.view.remove_item(time_select)
-#
-#
-# class TimeSlotSelect(discord.ui.Select):
-#     view = None
-#
-#     def __init__(self, view):
-#         self.view = view
-#         options = []
-#         for timeslot in self.view.data.get_timeslots():
-#             options.append(discord.SelectOption(label=timeslot, value=timeslot))
-#
-#         super().__init__(options=options, placeholder="Selecione um horario")
-#         self.view.add_item(self)
-#
-#     async def callback(self, interaction: discord.Interaction):
-#         print("ACTION ")
-#
-
 class Dota2View(discord.ui.View):
     def __init__(self, user_id, loop, ctx, bot):
         super().__init__(timeout=18000)
@@ -227,18 +189,6 @@ class Dota2View(discord.ui.View):
             self.add_item(button)
             self.buttons[timeslot] = button
 
-        # if "+" in self.buttons:
-        #     self.remove_item(self.buttons["+"])
-        # button = TimeSlotAddButton(label="+")
-        # self.add_item(button)
-        # self.buttons["+"] = button
-        #
-        # if "-" in self.buttons:
-        #     self.remove_item(self.buttons["-"])
-        # button = TimeSlotRemoveButton(label="-")
-        # self.add_item(button)
-        # self.buttons["-"] = button
-
     async def new(self):
         # self.emoji = await self.ctx.guild.fetch_emoji("906257799565152336")
         self.create_buttons()
@@ -263,7 +213,7 @@ class Dota2View(discord.ui.View):
     def create_embed(self):
         def get_button_style(time):
 
-            if len(self.data.get_users_list_at_time(time)) >= 1:
+            if len(self.data.get_users_list_at_time(time)) >= 4:
                 return discord.ButtonStyle.green
             else:
                 return discord.ButtonStyle.gray
@@ -281,8 +231,9 @@ class Dota2View(discord.ui.View):
                 timeslot_str = f"{split_time[0]}h"
                 if split_time[1] != "00":
                     timeslot_str += f"{split_time[1]}"
-                unix_timestamp =self.data.time_to_unix_timestamp(timeslot)
-                embed.add_field(inline=False, name=f"{timeslot_str} <t:{unix_timestamp}:t>", value=self.data.get_users_at_time(timeslot))
+                unix_timestamp = self.data.time_to_unix_timestamp(timeslot)
+                embed.add_field(inline=False, name=f"{timeslot_str} - <t:{unix_timestamp}:t>",
+                                value=self.data.get_users_at_time(timeslot))
 
             button = self.buttons.get(timeslot)
             if button is not None:
@@ -379,12 +330,13 @@ class Poll(commands.Cog):
         await self.view.new()
 
     @commands.command()
-    async def anunciartime(self, ctx):
+    async def anunciar(self, ctx):
         if self.view is None:
             return
 
         voted_time, unix_timestamp = self.view.data.most_votes()
-        member_ids = self.view.data.get_users_at_time(voted_time)
+        member_ids = self.view.data.get_users_list_at_time(voted_time)
+      #  member_ids.extend([89437921286819840, 89437921286819840, 89437921286819840, 89437921286819840])
 
         from utils import team_announce
         await team_announce.create_team_photo(ctx, self._bot.content.get("anuncio"), member_ids)
@@ -405,7 +357,7 @@ class Poll(commands.Cog):
             await ctx.send(file=discord.File(f, "frase_do_dia.wav"))
 
     @commands.command()
-    async def resetar(self, ctx: commands.Context):
+    async def reset(self, ctx: commands.Context):
         view = Dota2View(user_id=ctx.author.id, loop=self._bot.loop, ctx=ctx, bot=self._bot)
         view.data.reset()
         view.scheduler.remove_all_jobs()
