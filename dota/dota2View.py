@@ -161,7 +161,7 @@ class Dota2View(discord.ui.View):
             naodeu_imagens = self.bot.content.get_random("naodeu_imagens")
             await self.ctx.send(f"{naodeu_frase}")
             await self.ctx.send(f"{naodeu_imagens}")
-            # Imagem de duplas
+
             return
 
         unix_timestamp = self.data.time_to_unix_timestamp(selected_time)
@@ -169,7 +169,7 @@ class Dota2View(discord.ui.View):
         await team_announce.create_team_photo(self.ctx, self.bot.content.get("anuncio"), member_ids)
 
         ids_str = ' '.join([f'<@{mid}>' for mid in member_ids])
-        await self.ctx.send(f"<t:{unix_timestamp}:R>! Eis os escolhidos de hoje!\n {ids_str}")
+        await self.ctx.send(f"Eis os escolhidos das <t:{unix_timestamp}:t>! <t:{unix_timestamp}:R>! \n {ids_str}")
         await self.ctx.send(file=discord.File("group_photo.gif"))
 
         frase = self.bot.content.get_random("abertura_frases")

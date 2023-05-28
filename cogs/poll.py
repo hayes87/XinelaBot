@@ -41,9 +41,8 @@ class Poll(commands.Cog):
         await team_announce.create_team_photo(ctx, self._bot.content.get("anuncio"), member_ids)
 
         ids_str = ' '.join([f'<@{mid}>' for mid in member_ids])
-        await ctx.send(f"<t:{unix_timestamp}:R>! Eis os escolhidos de hoje!\n {ids_str}")
+        await ctx.send(f"Eis os escolhidos das <t:{unix_timestamp}:t>! <t:{unix_timestamp}:R>! \n {ids_str}")
         await ctx.send(file=discord.File("group_photo.gif"))
-
         frase = self._bot.content.get_random("abertura_frases")
         audio = generate(
             text=frase.replace("*", ""),
