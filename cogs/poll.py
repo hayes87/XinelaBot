@@ -29,14 +29,14 @@ class Poll(commands.Cog):
         await self.view.new()
 
     @commands.command()
-    async def anunciar(self, ctx):
+    async def test_anunciar_5(self, ctx):
         if self.view is None:
             print("[Anunciar] View is none")
             return
 
         voted_time, unix_timestamp = self.view.data.most_votes()
-        member_ids = self.view.data.get_users_list_at_time(voted_time)
-        #  member_ids.extend([89437921286819840, 89437921286819840, 89437921286819840, 89437921286819840])
+        # member_ids = self.view.data.get_users_list_at_time(voted_time)
+        member_ids = [89437921286819840, 89437921286819840, 89437921286819840, 89437921286819840, 89437921286819840]
 
         await team_announce.create_team_photo(ctx, self._bot.content.get("anuncio"), member_ids)
 
@@ -46,13 +46,13 @@ class Poll(commands.Cog):
         frase = self._bot.content.get_random("abertura_frases")
         audio = generate(
             text=frase.replace("*", ""),
-            voice=random.choice(["RpvoK8WoHsA3IVJ5sZRq"]),
+            voice=random.choice(["RpvoK8WoHsA3IVJ5sZRq", "Josh","Bella","Adam"]),
             model="eleven_multilingual_v1"
         )
 
-        save(audio, "frase_do_dia.wav")
-        with open("frase_do_dia.wav", "rb") as f:
-            await ctx.send(file=discord.File(f, "frase_do_dia.wav"))
+        save(audio, "sabedoria.wav")
+        with open("sabedoria.wav", "rb") as f:
+            await ctx.send(file=discord.File(f, "sabedoria.wav"))
 
     @commands.command()
     async def reset(self, ctx: commands.Context):
