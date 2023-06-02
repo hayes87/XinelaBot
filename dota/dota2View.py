@@ -179,9 +179,9 @@ class Dota2View(discord.ui.View):
             model="eleven_multilingual_v1"
         )
 
-        save(audio, "frase_do_dia.wav")
-        with open("frase_do_dia.wav", "rb") as f:
-            await self.ctx.send(file=discord.File(f, "frase_do_dia.wav"))
+        save(audio, "sabedoria.wav")
+        with open("sabedoria.wav", "rb") as f:
+            await self.ctx.send(file=discord.File(f, "sabedoria.wav"))
 
 
 class TimeslotModal(discord.ui.Modal, title="Novo horario"):

@@ -29,6 +29,33 @@ class Poll(commands.Cog):
         await self.view.new()
 
     @commands.command()
+    async def anunciar(self, ctx):
+        if self.view is None:
+            print("[Anunciar] View is none")
+            return
+
+        voted_time, unix_timestamp = self.view.data.most_votes()
+        member_ids = self.view.data.get_users_list_at_time(voted_time)
+        if len(member_ids) <= 0:
+            return
+
+        await team_announce.create_team_photo(ctx, self._bot.content.get("anuncio"), member_ids)
+
+        ids_str = ' '.join([f'<@{mid}>' for mid in member_ids])
+        await ctx.send(f"Eis os escolhidos das <t:{unix_timestamp}:t>! <t:{unix_timestamp}:R>! \n {ids_str}")
+        await ctx.send(file=discord.File("group_photo.gif"))
+        frase = self._bot.content.get_random("abertura_frases")
+        audio = generate(
+            text=frase.replace("*", ""),
+            voice=random.choice(["RpvoK8WoHsA3IVJ5sZRq", "Josh", "Bella", "Adam"]),
+            model="eleven_multilingual_v1"
+        )
+
+        save(audio, "sabedoria.wav")
+        with open("sabedoria.wav", "rb") as f:
+            await ctx.send(file=discord.File(f, "sabedoria.wav"))
+
+    @commands.command()
     async def test_anunciar_5(self, ctx):
         if self.view is None:
             print("[Anunciar] View is none")
@@ -46,7 +73,7 @@ class Poll(commands.Cog):
         frase = self._bot.content.get_random("abertura_frases")
         audio = generate(
             text=frase.replace("*", ""),
-            voice=random.choice(["RpvoK8WoHsA3IVJ5sZRq", "Josh","Bella","Adam"]),
+            voice=random.choice(["RpvoK8WoHsA3IVJ5sZRq", "Josh", "Bella", "Adam"]),
             model="eleven_multilingual_v1"
         )
 
