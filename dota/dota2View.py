@@ -1,18 +1,15 @@
 import os
-import random
-import traceback
 from datetime import datetime, timedelta
-import discord
+import disnake
 import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.base import STATE_STOPPED
-from elevenlabs import generate, save
-
+from elevenlabs import save
 from dota import team_announce
 from dota.dataHandler import DataHandler
 
 
-class Dota2View(discord.ui.View):
+class Dota2View(disnake.ui.View):
     def __init__(self, user_id, loop, ctx, bot):
         super().__init__(timeout=18000)
         self.bot = bot
@@ -43,7 +40,6 @@ class Dota2View(discord.ui.View):
             self.buttons[timeslot] = button
 
     async def new(self):
-        # self.emoji = await self.ctx.guild.fetch_emoji("906257799565152336")
         self.create_buttons()
         embed = self.create_embed()
 
@@ -67,19 +63,17 @@ class Dota2View(discord.ui.View):
         def get_button_style(time):
 
             if len(self.data.get_users_list_at_time(time)) >= 4:
-                return discord.ButtonStyle.green
+                return disnake.ButtonStyle.green
             else:
-                return discord.ButtonStyle.gray
+                return disnake.ButtonStyle.gray
 
-        embed = discord.Embed(title="Xinela Ready Checker", description="Escolha a hora do show!")
+        embed = disnake.Embed(title="Xinela Ready Checker", description="Escolha a hora do show!")
 
-        # embed.set_image(url="https://cdn.discordapp.com/attachments/1103077518375915571/1103541153724366868/image.png")
         embed.set_thumbnail(
             url="https://cdn.discordapp.com/app-icons/1103071608005984360/a5ee3bf0eb26fd1629a99771d37c2780.png?size=256")
 
         for timeslot in self.data.get_timeslots():
             if self.data.dict['times'].get(timeslot):
-
                 split_time = timeslot.split("h")
                 timeslot_str = f"{split_time[0]}h"
                 if split_time[1] != "00":
@@ -170,49 +164,24 @@ class Dota2View(discord.ui.View):
 
         ids_str = ' '.join([f'<@{mid}>' for mid in member_ids])
         await self.ctx.send(f"Eis os escolhidos das <t:{unix_timestamp}:t>! <t:{unix_timestamp}:R>! \n {ids_str}")
-        await self.ctx.send(file=discord.File("group_photo.gif"))
+        await self.ctx.send(file=disnake.File("group_photo.gif"))
 
-        frase = self.bot.content.get_random("abertura_frases")
-        audio = generate(
-            text=frase.replace("*", ""),
-            voice=random.choice(["RpvoK8WoHsA3IVJ5sZRq"]),
-            model="eleven_multilingual_v1"
-        )
+        frase = self.bot.content.get_random("frases")
+        imagem = self.bot.content.get_random("imagens")
+        await self.ctx.send(frase)
+        await self.ctx.send(imagem)
 
-        save(audio, "sabedoria.wav")
-        with open("sabedoria.wav", "rb") as f:
-            await self.ctx.send(file=discord.File(f, "sabedoria.wav"))
+        save("content", self.bot.content)
 
-
-class TimeslotModal(discord.ui.Modal, title="Novo horario"):
-    hour = discord.ui.TextInput(style=discord.TextStyle.short, label="Hora (15h30)", required=True,
-                                placeholder="19h30")
-
-    async def on_submit(self, interaction: discord.Interaction):
-        timeslot = f"{self.hour.value}"
-
-        if len(timeslot.split("h")) == 2:
-            try:
-                hour, minute = map(int, timeslot.split("h"))
-                if 0 <= hour < 24 and 0 <= minute < 60:
-                    await self.view.add_timeslot(timeslot)
-                    await interaction.response.send_message(f"Adicionei uma nova opcao {timeslot}.", ephemeral=True)
-                else:
-                    raise ValueError
-            except ValueError:
-                await interaction.response.send_message(f"Formato inválido! Use HHhMM.", ephemeral=True)
-        else:
-            await interaction.response.send_message(f"Formato inválido! Use HHhMM.", ephemeral=True)
-
-    async def on_error(self, interaction: discord.Interaction, error: Exception):
-        print(error)
-        traceback.print_tb(error.__traceback__)
+    async def remove(self):
+        await self.message.delete()
 
 
-class TimeSlotButton(discord.ui.Button):
+class TimeSlotButton(disnake.ui.Button):
     def __init__(self, time, label, **kwargs):
         super().__init__(label=label, **kwargs)
         self.time = time
 
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.MessageInteraction):
         await self.view.on_button(interaction, self.time)
+
