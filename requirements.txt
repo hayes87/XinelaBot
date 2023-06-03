@@ -1,9 +1,9 @@
 aiohttp==3.8.4
 APScheduler==3.10.1
-elevenlabs==0.2.15
+elevenlabs==0.2.17
 google==3.0.0
 gspread==5.9.0
 pytz==2023.3
 Pillow~=9.5.0
-discord~=2.2.3
 python-dotenv~=1.0.0
+disnake~=2.8.1
