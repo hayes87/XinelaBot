@@ -27,6 +27,7 @@ class Poll(commands.Cog):
         self._bot = xinelabot
         self.view = None
 
+    '''
     @tasks.loop(hours=24)
     async def reset_loop(self):
         view = Dota2View(loop=self._bot.loop, bot=self._bot)
@@ -39,6 +40,7 @@ class Poll(commands.Cog):
         midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
         delta_s = (midnight - now).total_seconds()
         await asyncio.sleep(delta_s)
+    '''
 
     @commands.slash_command(description="Marcar a hora da festa.")
     async def readycheck(self, interaction: disnake.ApplicationCommandInteraction):

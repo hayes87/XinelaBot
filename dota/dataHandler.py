@@ -11,10 +11,7 @@ class DataHandler:
         self.dict = self.load_from_json()
 
     def reset(self):
-        self.dict = {
-            "times": {"13h00": [], "14h00": [], "15h00": [], "17h00": [], "18h00": [], "19h00": [], "20h00": [], "21h00": [] , "22h00": [], "23h00": []},
-            "jobs": []
-        }
+        self.dict = self.__generate_data()
         self.save_to_json()
 
     def load_from_json(self):
@@ -22,10 +19,7 @@ class DataHandler:
             with open(self.json_file) as file:
                 return json.load(file)
         else:
-            return {
-                "times": {"13h00": [], "14h00": [], "15h00": [], "17h00": [], "18h00": [], "19h00": [], "20h00": [], "21h00": [] , "22h00": [], "23h00": []},
-                "jobs": []
-            }
+            return self.__generate_data()
 
     def save_to_json(self):
         with open(self.json_file, 'w') as file:
@@ -101,3 +95,17 @@ class DataHandler:
         else:
             unix_timestamp = None
         return unix_timestamp
+
+    def __generate_data(self):
+        data = {
+            "times": {},
+            "jobs": []
+        }
+
+        from_hour = 9
+        to_hour = 23
+
+        for h in range(from_hour, to_hour + 1):
+            data["times"]["{0}h00".format(h)] = []
+
+        return data
