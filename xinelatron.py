@@ -7,9 +7,13 @@ from utils.content import Content
 
 class XinelaTron(commands.Bot):
     def __init__(self, **options: Any):
+        print("Initializing...")
         super().__init__(command_prefix='!', intents=disnake.Intents.all(), **options)
+        print("Creating Content")
         self.content = Content()
+        print("Registering Commands")
         self.register_commands()
+        print("Starting...")
         self.run(env.BOT_TOKEN)
 
     def register_commands(self):

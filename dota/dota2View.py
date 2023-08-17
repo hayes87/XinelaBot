@@ -60,13 +60,6 @@ class Dota2View(disnake.ui.View):
         await self.disable_all_items()
 
     def create_embed(self):
-        def get_button_style(time):
-
-            if len(self.data.get_users_list_at_time(time)) >= 4:
-                return disnake.ButtonStyle.green
-            else:
-                return disnake.ButtonStyle.gray
-
         embed = disnake.Embed(title="Xinela Ready Checker", description="Escolha a hora do show!")
 
         embed.set_thumbnail(
@@ -84,13 +77,7 @@ class Dota2View(disnake.ui.View):
 
             button = self.buttons.get(timeslot)
             if button is not None:
-                button.style = get_button_style(timeslot)
-                if len(self.data.get_users_list_at_time(timeslot)) == 4:
-                    button.emoji = "<:eyes_freaking:906257799711973497>"
-                elif len(self.data.get_users_list_at_time(timeslot)) >= 5:
-                    button.emoji = "<a:pugdance:924016472941023312>"
-                else:
-                    button.emoji = None
+                button.update_state(timeslot, self.data.get_users_list_at_time(timeslot))
 
         return embed
 
@@ -122,11 +109,10 @@ class Dota2View(disnake.ui.View):
 
     async def on_button(self, interaction, time_str):
         time_formatted = self.format_time(time_str)
-        self.message = interaction.message
-        await interaction.response.defer()
         count = self.data.add(time_formatted, interaction.user.id)
         job_id = f'reminder_{time_formatted}'
         existing_jobs = [job for job in self.data.dict['jobs'] if job['job_id'] == job_id]
+
         for job in existing_jobs:
             if self.scheduler.get_job(job['job_id']):
                 self.scheduler.remove_job(job['job_id'])
@@ -141,9 +127,11 @@ class Dota2View(disnake.ui.View):
 
             if run_date < datetime.now(pytz.timezone('America/Sao_Paulo')):
                 run_date += timedelta(days=1)
+
             self.scheduler.add_job(self.sync_send_reminder, 'date', run_date=run_date, args=[time_formatted], id=job_id)
             self.data.add_job(run_date, interaction.channel.id, interaction.user.id, job_id)
-        await self.update_message()
+
+        await interaction.response.edit_message(view=self, embed=self.create_embed())
 
     def sync_send_reminder(self, selected_time):
         self.loop.create_task(self.send_reminder(selected_time))
@@ -176,7 +164,6 @@ class Dota2View(disnake.ui.View):
     async def remove(self):
         await self.message.delete()
 
-
 class TimeSlotButton(disnake.ui.Button):
     def __init__(self, time, label, **kwargs):
         super().__init__(label=label, **kwargs)
@@ -184,4 +171,20 @@ class TimeSlotButton(disnake.ui.Button):
 
     async def callback(self, interaction: disnake.MessageInteraction):
         await self.view.on_button(interaction, self.time)
+
+    def update_state(self, timeslot, users):
+        def get_button_style(time):
+            if len(users) >= 4:
+                return disnake.ButtonStyle.green
+            else:
+                return disnake.ButtonStyle.gray
+
+        self.style = get_button_style(timeslot)
+
+        if len(users) == 4:
+            self.emoji = "<:eyes_freaking:906257799711973497>"
+        elif len(users) >= 5:
+            self.emoji = "<a:pugdance:924016472941023312>"
+        else:
+            self.emoji = None
 
